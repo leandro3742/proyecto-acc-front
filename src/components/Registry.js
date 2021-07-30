@@ -4,10 +4,10 @@ import Test from '../views/Test';
 
 const Registry = (props) => {
     // props.function, props.show
-    console.log(props)
+    const [ocultarPass, setOcultarPass] = useState("text");
+    const [randomPass, setRandomPass] = useState(""); //Guardo la varable random que se crea para mostrarla
     const [pass, setPass] = useState(""); //Guardo la pass para poder validarla con repeat_password
     const [styleButtom, setStyleButtom] = useState({ opacity: "25%"})
-    const [show, setShow] = useState(props.show);
     const [childAddress, setChildAddress] = useState(""); //Guardo la direccion que recibo desde mi hijo
 
     const createUser = (name, password, adress, email) => {
@@ -73,7 +73,18 @@ const Registry = (props) => {
     const [validatedPassword, setValidatedPassword] = useState(false);
     const [validatedRepeatPassword, setValidatedRepeatPassword] = useState(false);
 
+// FUNCION RANDOM STRING
+    const  generateRandomString = (length) => {
+        var result           = '';
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < length; i++ ) {
+           result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
 
+// VERIFICACIONES
     const verifyName = (e) => {
         let verify = schema.validate({name: e.target.value});
         let aux;
@@ -89,6 +100,8 @@ const Registry = (props) => {
 
     };
     const verifyPassword = (e) => {
+        setOcultarPass("password") //Para que no se vea la pass a simple vista, hace que sean *
+
         let verify = schema.validate({password: e.target.value});
         let aux;
         if(verify.error){
@@ -98,6 +111,11 @@ const Registry = (props) => {
         else{
             aux = {backgroundColor: "#7AFC71"}
             setValidatedPassword(true);
+            if(e.target.value === randomPass){
+                document.querySelector("#repeatPassword").value = randomPass;
+                setBackgroundRepeatPassword(aux)
+                setValidatedRepeatPassword(true)
+            }
         }
         setBackgroundPassword(aux)
         setPass(e.target.value); //Guardo la pass para poder validarla con repeat_pass
@@ -167,10 +185,6 @@ const Registry = (props) => {
         setStyleButtom(style);
     },[validatedName, validatedEmail, validatedAdress, validatedPassword, validatedRepeatPassword])  
     
-    const handleClose = () => {
-        setShow(false);
-        props.function();
-    }
     const mostrarBoton = (childAddress, mostrar) => {
         console.log(childAddress)
         if(mostrar){
@@ -182,76 +196,60 @@ const Registry = (props) => {
         }
     }
 
-    const [ocultarPass, setOcultarPass] = useState("password");
     const mostrarPassword = () => {
         if(ocultarPass === "password")
             setOcultarPass("text")
         else
             setOcultarPass("password")
     }
-
-    const generarPassword = () => {
-        const  generateRandomString = (length) => {
-            var result           = '';
-            var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            var charactersLength = characters.length;
-            for ( var i = 0; i < length; i++ ) {
-               result += characters.charAt(Math.floor(Math.random() * charactersLength));
-            }
-            return result;
-        }
-        
-        let pass = generateRandomString(22);
-        setPass(pass);
-
-        let formPass = document.querySelector("#password");
-        formPass.value = pass;
-
-        let formRepeatPass = document.querySelector("#repeatPassword");
-        formRepeatPass.value = pass;
-        
-        setValidatedPassword(true);
-        setValidatedRepeatPassword(true);
-
-        setBackgroundPassword({backgroundColor: "#7AFC71"})
-        setBackgroundRepeatPassword({backgroundColor: "#7AFC71"})
-
-        // formRepeatPass.value = pass;
-
-        // schema.validate({password: formPass.value, repeat_password: formRepeatPass })
     
+    useEffect(() => {
+        let aux = generateRandomString(10);
+        setRandomPass(aux)
+    }, []);
+        
+    const cerrarModal = () => {
+        setValidatedName(false)
+        setValidatedEmail(false)
+        setValidatedAdress(false)
+        setValidatedPassword(false)
+        setValidatedRepeatPassword(false);
+        setBackgroundName({})
+        setBackgroundEmail({})
+        setBackgroundPassword({})
+        setBackgroundRepeatPassword({})
+        props.handleClose();
     }
 
     return (
     <div>
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={props.show} onHide={cerrarModal}>
             <Modal.Header closeButton>
                 <h2 className="text-center">Registrarme</h2>
             </Modal.Header>
             <Form className="row m-0 p-0" onSubmit={handleSubmit}>
                 <Form.Group className="col-lg-6 col-12 my-2">
                     <Form.Label>Name</Form.Label>
-                    <Form.Control type="text" id="name" placeholder="Enter email" onChange={verifyName} style={backgroundName}/>
+                    <Form.Control autoComplete="off" type="text" id="name" placeholder="Enter email" onChange={verifyName} style={backgroundName}/>
                 </Form.Group>
-
+               
                 <Form.Group className="col-lg-6 col-12 my-2">
-                    <Form.Label>Password</Form.Label>
-                    <Form.Control type={ocultarPass} id="password" placeholder="Password" onChange={verifyPassword} style={backgroundPassword}/>
-                    <Form.Check type="checkbox" label="Mostrar Password" onClick={mostrarPassword} />
+                    <Form.Label>Password</Form.Label>   
+                    <Form.Control onInput={verifyPassword} type={ocultarPass} multiple name="password" placeholder="Password" id="password" list="lista" style={backgroundPassword} />
+                    <datalist id="lista">
+                        <option key="1" value={randomPass}>Password segura</option>
+                    </datalist>
+                    <Form.Check className="mt-1" type="checkbox" label="Mostrar Password" onClick={mostrarPassword} />
                 </Form.Group>
 
                 <Form.Group className="col-lg-6 col-12 my-2">
                     <Form.Label>Repeat password</Form.Label>
-                    <Form.Control type="password" id="repeatPassword" placeholder="Password" onChange={verifyRepeatPassword} style={backgroundRepeatPassword}/>
-                </Form.Group>
-                
-                <Form.Group className="col-lg-6 col-12 my-2">
-                    <Button className="btn-success" onClick={generarPassword}>Crear Password segura</Button>
+                    <Form.Control type="password" id="repeatPassword" placeholder="Password" onInput={verifyRepeatPassword} style={backgroundRepeatPassword}/>
                 </Form.Group>
 
                 <Form.Group className="col-lg-6 col-12 my-2">
                     <Form.Label>Email</Form.Label>
-                    <Form.Control type="text" id="email" placeholder="Email" onChange={verifyEmail} style={backgroundEmail}/>
+                    <Form.Control  autoComplete="off" type="text" id="email" placeholder="Email" onInput={verifyEmail} style={backgroundEmail}/>
                 </Form.Group>
                 
                 <Form.Group className="col-lg-6 col-12 my-2">

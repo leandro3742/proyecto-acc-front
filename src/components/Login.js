@@ -3,7 +3,7 @@ import { Form, Button, Modal } from 'react-bootstrap';
 
 const Login = (props) => {
     // const [loginUser, setLoginUser] = useState(false);
-
+    const [ocultarPass, setOcultarPass] = useState("password");
     const login = async(email, password) => {
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -52,7 +52,7 @@ const Login = (props) => {
 
     const handleSubmit = async(event) => {
         event.preventDefault();
-        const form = event.currentTarget;
+        const form = event.target;
         let password = form.password.value;
         let email = form.email.value;
 
@@ -61,41 +61,33 @@ const Login = (props) => {
         if(!validated.error) //Si no existe un error en la validacion
             login(email, password);
     };
-    const [show, setShow] = useState(props.show);
-    const [mostrarRecuperarPass, setMostrarRecuperarPass] = useState(false);
 
-    const handleClose = (variable) => {
-        if(variable === "show"){
-            setShow(false);
-        }
-        else{
-            setMostrarRecuperarPass(false)
-            props.function();    
-        }
-    }
     const mostrarPassword = () => {
-        setMostrarRecuperarPass(true)
-        handleClose("show")
+        if(ocultarPass === "password")
+            setOcultarPass("text")
+        else
+            setOcultarPass("password")
     }
     return (
         <div>
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={props.show} onHide={()=>props.handleClose("close")}>
             <Modal.Header closeButton>
                 <h2 className="text-center">Iniciar sesion</h2>
             </Modal.Header>
             <Form className="row m-0 p-0" onSubmit={handleSubmit}>
                 <Form.Group className="col-lg-6 col-12 my-2">
                     <Form.Label>Email o nombre </Form.Label>
-                    <Form.Control type="text" placeholder="Ingrese su email o su nombre"/>
+                    <Form.Control id="email" type="text" autoComplete="off" placeholder="Ingrese su email o su nombre"/>
                 </Form.Group>
 
                 <Form.Group className="col-lg-6 col-12 my-2">
                     <Form.Label>Password</Form.Label>
-                    <Form.Control type="password" placeholder="Password" />
+                    <Form.Control id="password" type={ocultarPass} placeholder="Password" />
+                    <Form.Check className="mt-1" type="checkbox" label="Mostrar Password" onClick={mostrarPassword} />
                 </Form.Group>
 
-                <Form.Group className="col-lg-6 col-12 my-2">
-                    <span onClick={mostrarPassword} className="text-primary">Olvide mi contrasena</span>
+                <Form.Group className="col-lg-12 col-12 my-2">
+                    <span onClick={()=>props.handleClose("openForgotPassword")} className="text-primary float-right" style={{cursor: "pointer", textDecoration: "underline"}}>Forgot password</span>
                 </Form.Group>
 
                 <div className="col-12 my-2 d-flex justify-content-center">
@@ -104,26 +96,8 @@ const Login = (props) => {
                     </Button>
                 </div>
             </Form>
-        </Modal>
-
-        <Modal show={mostrarRecuperarPass} onHide={handleClose}>
-            <Modal.Header closeButton>
-                <h2 className="text-center">Iniciar sesion</h2>
-            </Modal.Header>
-            <Form className="row m-0 p-0" onSubmit={handleSubmit}>
-                <Form.Group className="col-lg-6 col-12 my-2">
-                    <Form.Label>Email o nombre </Form.Label>
-                    <Form.Control type="text" placeholder="Ingrese su email o su nombre"/>
-                </Form.Group>
-
-                <div className="col-12 my-2 d-flex justify-content-center">
-                    <Button variant="primary" type="submit">
-                        Recuperar contraseña
-                    </Button>
-                </div>
-            </Form>
-        </Modal>
-        
+           
+        </Modal>        
         </div>
     )
 }
