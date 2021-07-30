@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Form, Button, Modal } from 'react-bootstrap';
-import Test from '../views/Test';
+import Places from './Places';
+import Spinner from './Spinner';
+
+import Swal from 'sweetalert2'
 
 const Registry = (props) => {
     // props.function, props.show
@@ -9,15 +12,33 @@ const Registry = (props) => {
     const [pass, setPass] = useState(""); //Guardo la pass para poder validarla con repeat_password
     const [styleButtom, setStyleButtom] = useState({ opacity: "25%"})
     const [childAddress, setChildAddress] = useState(""); //Guardo la direccion que recibo desde mi hijo
+    const [spinner, setSpinner] = useState("d-none");
+    const [opacidadModal, setOpacidadModal] = useState("100%");
 
-    const createUser = (name, password, adress, email) => {
+    const createSuccess = () => {
+        Swal.fire({
+            title: 'El usuario fue creado exitosamente!',
+            text: 'Revisa tu casilla de correo para validar la cuenta',
+            icon: 'success',
+            confirmButtonText: 'Ok'
+        })
+    }
+
+    const errorCreate = (error) => {
+        Swal.fire({
+            title: error,
+            icon: 'error',
+            confirmButtonText: 'Ok'
+        })
+    }
+    const createUser = (name, password, address, email) => {
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
 
         var raw = JSON.stringify({
             name: name,
             password: password,
-            adress: adress,
+            address: address,
             email: email,
         });
 
@@ -29,14 +50,23 @@ const Registry = (props) => {
 
         const fetchUsuario = async () => {
             try {
-                // setStore({ loading: true });
+                setOpacidadModal("75%")
+                setSpinner("")
                 const res = await fetch(process.env.REACT_APP_URL + "/user", requestOptions);
                 const data = await res.json();
                 console.log(data);
-                // console.log(usuarios);
+                setSpinner("d-none")
+                if(data.message !== "ok")
+                    errorCreate(data.message)
+                else
+                    createSuccess();
+
+                setOpacidadModal("100%")
             } catch (error) {
+                setSpinner("d-none")
+                setOpacidadModal("100%")
+                errorCreate(error.message)
                 console.log(error);
-                // setStore({ loading: false });
                 return "error";
             }
         };
@@ -59,7 +89,7 @@ const Registry = (props) => {
         email: Joi.string()
             .email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] } } ),
 
-        adress: Joi.string()
+        address: Joi.string()
             .alphanum()
     })
     ///////////////////////////////////////////////
@@ -69,7 +99,7 @@ const Registry = (props) => {
     const [backgroundRepeatPassword, setBackgroundRepeatPassword] = useState({backgroundColor: ""});
     const [validatedName, setValidatedName] = useState(false);
     const [validatedEmail, setValidatedEmail] = useState(false);
-    const [validatedAdress, setValidatedAdress] = useState(false);
+    const [validatedAddress, setValidatedAddress] = useState(false);
     const [validatedPassword, setValidatedPassword] = useState(false);
     const [validatedRepeatPassword, setValidatedRepeatPassword] = useState(false);
 
@@ -172,7 +202,7 @@ const Registry = (props) => {
     useEffect(()=>{
         let style;
         // Si todos los campos pasaron la validacion
-        if(validatedName && validatedEmail && validatedAdress && validatedPassword && validatedRepeatPassword){
+        if(validatedName && validatedEmail && validatedAddress && validatedPassword && validatedRepeatPassword){
             style = { opacity: "100%" }
             setSendForm(true);
         }
@@ -183,16 +213,16 @@ const Registry = (props) => {
 
         }
         setStyleButtom(style);
-    },[validatedName, validatedEmail, validatedAdress, validatedPassword, validatedRepeatPassword])  
+    },[validatedName, validatedEmail, validatedAddress, validatedPassword, validatedRepeatPassword])  
     
     const mostrarBoton = (childAddress, mostrar) => {
         console.log(childAddress)
         if(mostrar){
             setChildAddress(childAddress);
-            setValidatedAdress(true);
+            setValidatedAddress(true);
         }
         else{
-            setValidatedAdress(false);            
+            setValidatedAddress(false);            
         }
     }
 
@@ -211,20 +241,22 @@ const Registry = (props) => {
     const cerrarModal = () => {
         setValidatedName(false)
         setValidatedEmail(false)
-        setValidatedAdress(false)
+        setValidatedAddress(false)
         setValidatedPassword(false)
         setValidatedRepeatPassword(false);
         setBackgroundName({})
         setBackgroundEmail({})
         setBackgroundPassword({})
         setBackgroundRepeatPassword({})
+        setOpacidadModal("");
         props.handleClose();
     }
 
     return (
     <div>
-        <Modal show={props.show} onHide={cerrarModal}>
-            <Modal.Header closeButton>
+        <Modal show={props.show} onHide={cerrarModal} style={{ opacity: opacidadModal }}>
+            <div style={{position: "absolute", top:"50%", left: "40%", width:"10%", zIndex: "1", opacity: "100%"}} className={spinner}><Spinner/></div> 
+           <Modal.Header closeButton>
                 <h2 className="text-center">Registrarme</h2>
             </Modal.Header>
             <Form className="row m-0 p-0" onSubmit={handleSubmit}>
@@ -241,7 +273,6 @@ const Registry = (props) => {
                     </datalist>
                     <Form.Check className="mt-1" type="checkbox" label="Mostrar Password" onClick={mostrarPassword} />
                 </Form.Group>
-
                 <Form.Group className="col-lg-6 col-12 my-2">
                     <Form.Label>Repeat password</Form.Label>
                     <Form.Control type="password" id="repeatPassword" placeholder="Password" onInput={verifyRepeatPassword} style={backgroundRepeatPassword}/>
@@ -254,7 +285,7 @@ const Registry = (props) => {
                 
                 <Form.Group className="col-lg-6 col-12 my-2">
                     <Form.Label>Address</Form.Label>
-                    <Test mostrarBoton={mostrarBoton}/>
+                    <Places mostrarBoton={mostrarBoton}/>
                 </Form.Group>
                 
                 <div className="col-12 my-2 d-flex justify-content-center">

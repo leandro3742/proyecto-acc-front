@@ -1,9 +1,21 @@
 import React, { useState } from 'react'
 import { Form, Button, Modal } from 'react-bootstrap';
+import Spinner from './Spinner';
+
+import Swal from 'sweetalert2';
 
 const Login = (props) => {
     // const [loginUser, setLoginUser] = useState(false);
     const [ocultarPass, setOcultarPass] = useState("password");
+    const [spinner, setSpinner] = useState("d-none");
+    const [opacidadModal, setOpacidadModal] = useState("100%");
+
+    const errorLogin = (error) => {
+        Swal.fire({
+            title: error,
+            icon: "error",
+        })
+    }
     const login = async(email, password) => {
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -20,46 +32,41 @@ const Login = (props) => {
 
         const fetchLogin = async () => {
             try {
+                setSpinner("");
+                setOpacidadModal("75%");
                 const res = await fetch(process.env.REACT_APP_URL + "/login", requestOptions);
                 const data = await res.json();
-
+                console.log("data", data)
+                setSpinner("d-none")
+                setOpacidadModal("100%");
                 if (data.message !== "Ok") {
                     //Ocurre un error y lo muestro en una alerta
-                    alert(data.message)
+                    errorLogin(data.message);
                     return "error";
                 }
-                console.log(data);
+                else{
                 sessionStorage.setItem("token", data.token); //Guardo el token que recibo del back
                 let usuario = data.usuario;               
                 localStorage.setItem("usuario", JSON.stringify(usuario)); //Guardo el usuario completo para no tener que pediro a cada rato
+                console.log(localStorage.getItem("usuario"));
                 // setLoginUser(true); 
-                return "ok";
+                }
             } catch (error) {
-                console.log(error);
+                errorLogin(error);
+                    console.log(error);
                 return "error";
             }
         };
         let result = fetchLogin();
-        console.log(localStorage.getItem("usuario"));
         return result;
     };
-
-    const Joi = require('joi');
-    const schema = Joi.object({
-        email: Joi.string()
-            .email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] } } ),
-    })
 
     const handleSubmit = async(event) => {
         event.preventDefault();
         const form = event.target;
         let password = form.password.value;
         let email = form.email.value;
-
-        let validated = schema.validate({email: email});
-        console.log(validated)
-        if(!validated.error) //Si no existe un error en la validacion
-            login(email, password);
+        login(email, password);
     };
 
     const mostrarPassword = () => {
@@ -68,9 +75,14 @@ const Login = (props) => {
         else
             setOcultarPass("password")
     }
+    const cerrarModal = () => {
+        setOpacidadModal("");
+        props.handleClose("close")
+    }
     return (
         <div>
-        <Modal show={props.show} onHide={()=>props.handleClose("close")}>
+        <Modal style={{ opacity: opacidadModal }} show={props.show} onHide={cerrarModal}>
+            <div style={{position: "absolute", top:"50%", left: "40%", width:"10%", zIndex: "1", opacity: "100%"}} className={spinner}><Spinner/></div> 
             <Modal.Header closeButton>
                 <h2 className="text-center">Iniciar sesion</h2>
             </Modal.Header>
