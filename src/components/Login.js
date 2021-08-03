@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Form, Button, Modal } from 'react-bootstrap';
 import Spinner from './Spinner';
+import { Auth } from 'aws-amplify';
 
 import Swal from 'sweetalert2';
 
@@ -45,10 +46,12 @@ const Login = (props) => {
                     return "error";
                 }
                 else{
-                sessionStorage.setItem("token", data.token); //Guardo el token que recibo del back
                 let usuario = data.usuario;               
-                localStorage.setItem("usuario", JSON.stringify(usuario)); //Guardo el usuario completo para no tener que pediro a cada rato
-                console.log(localStorage.getItem("usuario"));
+                localStorage.setItem("token", data.token); //Guardo el token en el local
+                localStorage.setItem("nombre", usuario.name); //Guardo el usuario en el local
+                console.log(localStorage.getItem("nombre"));
+                console.log(localStorage.getItem("token"));
+
                 // setLoginUser(true); 
                 }
             } catch (error) {
@@ -61,12 +64,21 @@ const Login = (props) => {
         return result;
     };
 
+    const signIn = async(username, password) => {
+        try {
+            const user = await Auth.signIn(username, password);
+            console.log(user)
+        } catch (error) {
+            console.log('error signing in', error);
+        }
+    }
     const handleSubmit = async(event) => {
         event.preventDefault();
         const form = event.target;
         let password = form.password.value;
         let email = form.email.value;
-        login(email, password);
+        signIn(email, password)
+        // login(email, password);
     };
 
     const mostrarPassword = () => {

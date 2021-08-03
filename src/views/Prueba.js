@@ -1,21 +1,30 @@
 import React, { useState } from 'react'
-import ForgotPassword from '../components/ForgotPassword';
+import { Auth } from 'aws-amplify';
 
 const Prueba = () => {
-    const [show, setShow] = useState(false)
-    
-    const mostrarModal = () => {
-        setShow(true)
-    };
-    
-    const handleClose = () => {
-        setShow(false)
-    }
 
+    async function confirmSignUp(username, code) {
+        try {
+            await Auth.confirmSignUp(username, code);
+            console.log("ok")
+        } catch (error) {
+            console.log('error confirming sign up', error);
+        }
+    }
+    const onSubmit = (event) => {
+        event.preventDefault()
+        let form = event.currentTarget;
+        let user = form.user.value;
+        let code = form.code.value;
+        confirmSignUp(user, code);
+    }
     return (
         <div>
-            <button onClick={mostrarModal} className="btn btn-secondary">Boton de modal</button>
-            <ForgotPassword show={show} handleClose={handleClose}/>
+            <form onSubmit={onSubmit}>
+                <input placeholder="nombre de usuario" id="user" />
+                <input placeholder="codigo" id="code" />
+                <button type="submit">Enviar</button>
+            </form>
         </div>
     )
 }
